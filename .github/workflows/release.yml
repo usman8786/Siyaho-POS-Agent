@@ -143,8 +143,8 @@ jobs:
         if: env.CDN_DEPLOY_SKIP != 'true'
         run: |
           ssh deploy-server "
-            mkdir -p /var/deployments/pos-web/downloads/print-agent &&
-            chown -R siyaho:siyaho /var/deployments/pos-web/downloads
+            mkdir -p /var/deployments/pos-downloads/print-agent &&
+            chown -R siyaho:siyaho /var/deployments/pos-downloads
           "
 
       - name: Deploy print agent to CDN
@@ -153,7 +153,7 @@ jobs:
           VERSION: ${{ needs.build-windows.outputs.version }}
         run: |
           set -euo pipefail
-          DEST="/var/deployments/pos-web/downloads/print-agent"
+          DEST="/var/deployments/pos-downloads/print-agent"
           INSTALLER="$(find . -type f -name "SiyahoPrinterAgent-Setup-${VERSION}.exe" | head -n 1)"
           RELEASES_JSON="$(find . -type f -name "releases.json" | head -n 1)"
           if [ -z "$INSTALLER" ] || [ ! -f "$INSTALLER" ]; then
