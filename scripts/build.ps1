@@ -9,7 +9,7 @@ New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 
 Write-Host "Building SiyahoPrinterAgent.exe..."
 Push-Location $Root
-go build -ldflags "-X main.version=$Version" -o "$Dist\SiyahoPrinterAgent.exe" ./agent
+go build -o "$Dist\SiyahoPrinterAgent.exe" ./agent
 Pop-Location
 
 $Inno = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"

@@ -9,9 +9,9 @@ import (
 	"strings"
 	"time"
 
-	"github.com/usman8786/Siyaho-POS-Agent/agent"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/config"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/license"
+	"github.com/usman8786/Siyaho-POS-Agent/agent/meta"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/print"
 )
 
@@ -65,8 +65,8 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 	lic := s.Licenses.Snapshot()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":      true,
-		"service": agent.ServiceName,
-		"version": agent.Version,
+		"service": meta.ServiceName,
+		"version": meta.Version,
 		"port":    s.Port,
 		"license": map[string]any{
 			"valid":       lic.Valid,
@@ -180,6 +180,6 @@ func ListenAddress(port int) string {
 
 func LogStartup(port int) {
 	fmt.Printf("Siyaho Printer Agent listening on http://%s\n", ListenAddress(port))
-	fmt.Printf("Version %s\n", agent.Version)
+	fmt.Printf("Version %s\n", meta.Version)
 	fmt.Printf("Started at %s\n", time.Now().Format(time.RFC3339))
 }
