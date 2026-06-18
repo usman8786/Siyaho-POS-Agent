@@ -1,0 +1,15 @@
+{
+  "name": "@siyaho/printer-agent",
+  "version": "1.0.0",
+  "description": "JavaScript client for Siyaho Printer Agent (local ESC/POS bridge)",
+  "license": "MIT",
+  "type": "module",
+  "main": "./index.js",
+  "exports": {
+    ".": "./index.js"
+  },
+  "files": [
+    "index.js",
+    "errors.js"
+  ]
+}

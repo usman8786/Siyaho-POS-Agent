@@ -1,0 +1,93 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  build-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.22'
+
+      - name: Resolve version
+        id: ver
+        shell: bash
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          echo "version=$TAG" >> "$GITHUB_OUTPUT"
+
+      - name: Build agent binary
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist | Out-Null
+          go build -o dist/SiyahoPrinterAgent.exe ./agent
+
+      - name: Install Inno Setup
+        run: choco install innosetup -y
+
+      - name: Build installer
+        shell: pwsh
+        run: |
+          $version = "${{ steps.ver.outputs.version }}"
+          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer/windows/setup.iss
+
+      - name: Optional code sign
+        shell: pwsh
+        env:
+          CODESIGN_PFX_BASE64: ${{ secrets.CODESIGN_PFX_BASE64 }}
+          CODESIGN_PFX_PASSWORD: ${{ secrets.CODESIGN_PFX_PASSWORD }}
+        run: |
+          if (-not $env:CODESIGN_PFX_BASE64) { Write-Host "Skipping code sign (no secrets)"; exit 0 }
+          $pfxPath = "$env:RUNNER_TEMP\codesign.pfx"
+          [IO.File]::WriteAllBytes($pfxPath, [Convert]::FromBase64String($env:CODESIGN_PFX_BASE64))
+          $files = @("dist/SiyahoPrinterAgent.exe", "dist/SiyahoPrinterAgent-Setup-${{ steps.ver.outputs.version }}.exe")
+          foreach ($f in $files) {
+            if (Test-Path $f) {
+              & signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /f $pfxPath /p $env:CODESIGN_PFX_PASSWORD $f
+            }
+          }
+
+      - name: Write releases.json
+        shell: pwsh
+        run: |
+          $version = "${{ steps.ver.outputs.version }}"
+          $json = @{
+            version = $version
+            windows = "https://pos.siyaho.com/downloads/print-agent/SiyahoPrinterAgent-Setup-$version.exe"
+            minVersion = $version
+          } | ConvertTo-Json
+          Set-Content -Path releases.json -Value $json -Encoding UTF8
+          Copy-Item "dist/SiyahoPrinterAgent-Setup-$version.exe" "dist/SiyahoPrinterAgent-Setup-latest.exe" -ErrorAction SilentlyContinue
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/SiyahoPrinterAgent.exe
+            dist/SiyahoPrinterAgent-Setup-${{ steps.ver.outputs.version }}.exe
+            releases.json
+
+      - name: Deploy to CDN (optional)
+        if: ${{ secrets.SELFHOSTED_SSH_PRIVATE_KEY != '' }}
+        shell: pwsh
+        env:
+          SSH_KEY: ${{ secrets.SELFHOSTED_SSH_PRIVATE_KEY }}
+        run: |
+          $version = "${{ steps.ver.outputs.version }}"
+          $keyPath = "$env:RUNNER_TEMP\deploy_key"
+          Set-Content -Path $keyPath -Value $env:SSH_KEY
+          icacls $keyPath /inheritance:r /grant:r "$($env:USERNAME):(R)"
+          $remote = "root@103.18.23.182"
+          $dest = "/var/deployments/pos-web/downloads/print-agent/"
+          scp -i $keyPath -o StrictHostKeyChecking=no "dist/SiyahoPrinterAgent-Setup-$version.exe" "${remote}:${dest}"
+          scp -i $keyPath -o StrictHostKeyChecking=no releases.json "${remote}:${dest}"
+          ssh -i $keyPath -o StrictHostKeyChecking=no $remote "cd ${dest} && ln -sf SiyahoPrinterAgent-Setup-$version.exe SiyahoPrinterAgent-Setup-latest.exe"
