@@ -77,11 +77,11 @@ jobs:
             releases.json
 
       - name: Deploy to CDN (optional)
-        if: ${{ secrets.SELFHOSTED_SSH_PRIVATE_KEY != '' }}
         shell: pwsh
         env:
           SSH_KEY: ${{ secrets.SELFHOSTED_SSH_PRIVATE_KEY }}
         run: |
+          if (-not $env:SSH_KEY) { Write-Host "Skipping CDN deploy (SELFHOSTED_SSH_PRIVATE_KEY not set)"; exit 0 }
           $version = "${{ steps.ver.outputs.version }}"
           $keyPath = "$env:RUNNER_TEMP\deploy_key"
           Set-Content -Path $keyPath -Value $env:SSH_KEY
