@@ -152,13 +152,22 @@ jobs:
         env:
           VERSION: ${{ needs.build-windows.outputs.version }}
         run: |
+          set -euo pipefail
           DEST="/var/deployments/pos-web/downloads/print-agent"
-          INSTALLER="cdn/SiyahoPrinterAgent-Setup-${VERSION}.exe"
-          if [ ! -f "$INSTALLER" ]; then
-            echo "Expected installer not found at $INSTALLER"
-            find . -name "SiyahoPrinterAgent-Setup-*.exe" -print
+          INSTALLER="$(find . -type f -name "SiyahoPrinterAgent-Setup-${VERSION}.exe" | head -n 1)"
+          RELEASES_JSON="$(find . -type f -name "releases.json" | head -n 1)"
+          if [ -z "$INSTALLER" ] || [ ! -f "$INSTALLER" ]; then
+            echo "Installer not found for version ${VERSION}"
+            find . -type f -print
             exit 1
           fi
+          if [ -z "$RELEASES_JSON" ] || [ ! -f "$RELEASES_JSON" ]; then
+            echo "releases.json not found"
+            find . -type f -print
+            exit 1
+          fi
+          echo "Using installer: $INSTALLER"
+          echo "Using releases.json: $RELEASES_JSON"
           rsync -az -e ssh "$INSTALLER" "deploy-server:${DEST}/"
-          rsync -az -e ssh cdn/releases.json "deploy-server:${DEST}/releases.json"
+          rsync -az -e ssh "$RELEASES_JSON" "deploy-server:${DEST}/releases.json"
           ssh deploy-server "cd ${DEST} && ln -sf SiyahoPrinterAgent-Setup-${VERSION}.exe SiyahoPrinterAgent-Setup-latest.exe"
