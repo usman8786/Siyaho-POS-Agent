@@ -17,6 +17,8 @@ permissions:
 jobs:
   build-windows:
     runs-on: windows-latest
+    outputs:
+      version: ${{ steps.ver.outputs.version }}
     steps:
       - uses: actions/checkout@v4
 
@@ -89,18 +91,61 @@ jobs:
             dist/SiyahoPrinterAgent-Setup-${{ steps.ver.outputs.version }}.exe
             releases.json
 
-      - name: Deploy to CDN (optional)
-        shell: pwsh
+      - name: Upload CDN artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: print-agent-cdn
+          path: |
+            dist/SiyahoPrinterAgent-Setup-${{ steps.ver.outputs.version }}.exe
+            releases.json
+
+  deploy-cdn:
+    needs: build-windows
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download CDN artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: print-agent-cdn
+
+      - name: Setup SSH
         env:
           SSH_KEY: ${{ secrets.SELFHOSTED_SSH_PRIVATE_KEY }}
         run: |
-          if (-not $env:SSH_KEY) { Write-Host "Skipping CDN deploy (SELFHOSTED_SSH_PRIVATE_KEY not set)"; exit 0 }
-          $version = "${{ steps.ver.outputs.version }}"
-          $keyPath = "$env:RUNNER_TEMP\deploy_key"
-          Set-Content -Path $keyPath -Value $env:SSH_KEY
-          icacls $keyPath /inheritance:r /grant:r "$($env:USERNAME):(R)"
-          $remote = "root@103.18.23.182"
-          $dest = "/var/deployments/pos-web/downloads/print-agent/"
-          scp -i $keyPath -o StrictHostKeyChecking=no "dist/SiyahoPrinterAgent-Setup-$version.exe" "${remote}:${dest}"
-          scp -i $keyPath -o StrictHostKeyChecking=no releases.json "${remote}:${dest}"
-          ssh -i $keyPath -o StrictHostKeyChecking=no $remote "cd ${dest} && ln -sf SiyahoPrinterAgent-Setup-$version.exe SiyahoPrinterAgent-Setup-latest.exe"
+          if [ -z "$SSH_KEY" ]; then
+            echo "CDN_DEPLOY_SKIP=true" >> "$GITHUB_ENV"
+            echo "Skipping CDN deploy (SELFHOSTED_SSH_PRIVATE_KEY not set)"
+            exit 0
+          fi
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H 103.18.23.182 >> ~/.ssh/known_hosts
+          cat > ~/.ssh/config <<EOF
+          Host deploy-server
+            HostName 103.18.23.182
+            User siyaho
+            IdentityFile ~/.ssh/id_ed25519
+            StrictHostKeyChecking no
+            ServerAliveInterval 30
+            ServerAliveCountMax 3
+          EOF
+          chmod 600 ~/.ssh/config
+
+      - name: Prepare remote CDN directory
+        if: env.CDN_DEPLOY_SKIP != 'true'
+        run: |
+          ssh deploy-server "
+            mkdir -p /var/deployments/pos-web/downloads/print-agent &&
+            chown -R siyaho:siyaho /var/deployments/pos-web/downloads
+          "
+
+      - name: Deploy print agent to CDN
+        if: env.CDN_DEPLOY_SKIP != 'true'
+        env:
+          VERSION: ${{ needs.build-windows.outputs.version }}
+        run: |
+          DEST="/var/deployments/pos-web/downloads/print-agent"
+          rsync -az -e ssh "SiyahoPrinterAgent-Setup-${VERSION}.exe" "deploy-server:${DEST}/"
+          rsync -az -e ssh releases.json "deploy-server:${DEST}/"
+          ssh deploy-server "cd ${DEST} && ln -sf SiyahoPrinterAgent-Setup-${VERSION}.exe SiyahoPrinterAgent-Setup-latest.exe"
