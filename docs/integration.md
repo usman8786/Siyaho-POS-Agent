@@ -1,6 +1,6 @@
 # Siyaho Printer Agent — Integration Guide
 
-Connect your web POS to network thermal printers (TCP port 9100) via a local agent on the cashier PC.
+Connect your web POS to network thermal printers (TCP port 9100) or **Windows USB/local printers** via a local agent on the cashier PC.
 
 ## Quick start
 
@@ -8,7 +8,15 @@ Connect your web POS to network thermal printers (TCP port 9100) via a local age
 2. Confirm health: `GET http://127.0.0.1:17890/v1/health`
 3. From your web app (same machine), send print jobs to `POST /v1/print` or legacy `POST /print`.
 
+**Network printer:** `{ "printer": { "ip": "192.168.1.50", "port": 9100 }, "payload": "..." }`
+
+**Windows USB printer:** `{ "printer": { "type": "windows", "name": "Generic / Text Only Speedex" }, "payload": "..." }`
+
+List installed Windows printers: `GET http://127.0.0.1:17890/v1/printers`
+
 Logs: `%ProgramData%\Siyaho\PrinterAgent\agent.log`
+
+Use an ESC/POS driver when possible; "Generic / Text Only" may produce garbled receipts.
 
 ## JavaScript SDK
 
@@ -25,6 +33,8 @@ const bridge = new PrintBridge({
 });
 
 if (await bridge.ping()) {
+  const printers = await bridge.listPrinters();
+  await bridge.printDantsu({ type: 'windows', name: 'Generic / Text Only Speedex' }, '[L]Hello\n[C]<b>Total</b> 10.00');
   await bridge.printDantsu({ ip: '192.168.1.50', port: 9100 }, '[L]Hello\n[C]<b>Total</b> 10.00');
 }
 ```

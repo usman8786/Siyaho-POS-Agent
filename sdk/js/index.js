@@ -88,8 +88,51 @@ export class PrintBridge {
   }
 
   /**
+   * List Windows printers installed on this PC (agent must run on Windows).
+   * @returns {Promise<{ ok: boolean, printers: Array<{ name: string, portName?: string, driverName?: string, isDefault?: boolean }> }>}
+   */
+  async listPrinters() {
+    const up = await this.ping();
+    if (!up) throw new AgentNotRunningError();
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), Math.max(this.timeoutMs, 5000));
+    try {
+      const res = await fetch(`${this.baseUrl}/v1/printers`, { signal: controller.signal });
+      clearTimeout(timer);
+      if (!res.ok) {
+        let msg = 'Failed to list printers';
+        try {
+          const json = await res.json();
+          msg = json.error || msg;
+        } catch {
+          /* ignore */
+        }
+        throw new PrintAgentError(msg, res.status);
+      }
+      return res.json();
+    } catch (e) {
+      clearTimeout(timer);
+      if (e instanceof PrintAgentError || e instanceof AgentNotRunningError) throw e;
+      throw new AgentNotRunningError();
+    }
+  }
+
+  /**
+   * Build printer object for legacy /print body.
+   * @param {{ type?: string, ip?: string, port?: number, name?: string }} printer
+   */
+  buildPrinterBody(printer) {
+    const type = String(printer?.type || '').toLowerCase();
+    if (type === 'windows' || (!printer?.ip && printer?.name)) {
+      return { type: 'windows', name: printer.name };
+    }
+    return { ip: printer.ip, port: printer.port || 9100 };
+  }
+
+  /**
    * Legacy DantSu payload used by Siyaho POS Web.
-   * @param {{ ip: string, port?: number }} printer
+   * @param {{ type?: string, ip?: string, port?: number, name?: string }} printer
    * @param {string} payload
    */
   async printDantsu(printer, payload) {
@@ -100,7 +143,7 @@ export class PrintBridge {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        printer: { ip: printer.ip, port: printer.port || 9100 },
+        printer: this.buildPrinterBody(printer),
         payload,
       }),
     });

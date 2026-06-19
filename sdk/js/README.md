@@ -1,12 +1,12 @@
 # siyaho-printer-agent
 
-JavaScript client for **[Siyaho Printer Agent](https://github.com/usman8786/Siyaho-POS-Agent)** — a local Windows bridge that lets web POS apps print ESC/POS receipts to **network thermal printers** (TCP port 9100) without the browser print dialog.
+JavaScript client for **[Siyaho Printer Agent](https://github.com/usman8786/Siyaho-POS-Agent)** — a local Windows bridge that lets web POS apps print ESC/POS receipts to **network thermal printers** (TCP port 9100) or **Windows USB/local printers** without the browser print dialog.
 
 This npm package is the **browser SDK**. The actual print service is a small **Go agent** that runs on the cashier PC. You need **both**: install the agent `.exe` on each Windows machine, then use this package (or plain `fetch`) from your web app.
 
 ## Download the Windows agent (required)
 
-Install on every PC that prints to a LAN thermal printer:
+Install on every PC that prints to a LAN or USB thermal printer:
 
 | Resource | URL |
 |----------|-----|
@@ -42,12 +42,21 @@ const bridge = new PrintBridge({
 // Check agent on this PC
 if (await bridge.ping()) {
   const health = await bridge.getHealth();
-  console.log(health.version); // e.g. "1.0.2"
+  console.log(health.version); // e.g. "1.1.0"
 }
 
-// Legacy DantSu payload (used by Siyaho POS Web)
+// List Windows printers (USB, etc.)
+const { printers } = await bridge.listPrinters();
+
+// Network printer
 await bridge.printDantsu(
   { ip: '192.168.1.50', port: 9100 },
+  '[L]Hello\n[C]<b>Total</b> 10.00',
+);
+
+// Windows USB / installed printer (exact name from listPrinters)
+await bridge.printDantsu(
+  { type: 'windows', name: 'Generic / Text Only Speedex' },
   '[L]Hello\n[C]<b>Total</b> 10.00',
 );
 
@@ -104,8 +113,9 @@ try {
 |--------|-------------|
 | `ping()` | `true` if agent responds on `/v1/health` or legacy `/health` |
 | `getHealth()` | Full health JSON (`version`, `service`, `license`, …) |
+| `listPrinters()` | `GET /v1/printers` — Windows installed printers |
 | `print(job)` | `POST /v1/print` |
-| `printDantsu(printer, payload)` | `POST /print` (legacy DantSu format) |
+| `printDantsu(printer, payload)` | `POST /print` — network `{ ip, port }` or Windows `{ type: 'windows', name }` |
 | `getDownloadUrl(platform?)` | Installer URL for Windows |
 | `fetchLatestRelease()` | Parse `releases.json` |
 | `openDownload(platform?)` | Open installer in browser; returns URL |
@@ -130,6 +140,7 @@ The Go agent listens on **`127.0.0.1:17890`** only (not exposed to the network).
 
 | Endpoint | Method | Description |
 |----------|--------|-------------|
+| `/v1/printers` | GET | List Windows installed printers |
 | `/v1/health` | GET | Status, version, license info |
 | `/v1/print` | POST | v1 print job |
 | `/print` | POST | Legacy `{ printer: { ip, port }, payload }` |

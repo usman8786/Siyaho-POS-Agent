@@ -1,6 +1,6 @@
 # Siyaho Printer Agent
 
-Local bridge so web POS apps can send ESC/POS receipts to network thermal printers (TCP port 9100).
+Local bridge so web POS apps can send ESC/POS receipts to **network thermal printers** (TCP port 9100) or **Windows USB/local printers** via the spooler.
 
 ## Run (development)
 
@@ -23,6 +23,7 @@ Reboot or log off/on is not required after install — the agent starts immediat
 
 ## Endpoints
 
+- `GET /v1/printers` — list Windows installed printers (Windows only)
 - `GET /v1/health` — agent status
 - `POST /v1/print` — v1 print job
 - `POST /print` — legacy DantSu body `{ printer: { ip, port }, payload }`

@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Siyaho Printer Agent API
-  version: 1.0.0
-  description: Local bridge between web POS apps and network thermal printers.
+  version: 1.1.0
+  description: Local bridge between web POS apps and network or Windows USB thermal printers.
 servers:
   - url: http://127.0.0.1:17890
 paths:
@@ -25,8 +25,29 @@ paths:
                     type: string
                   port:
                     type: integer
+                  platform:
+                    type: string
                   license:
                     type: object
+  /v1/printers:
+    get:
+      summary: List Windows printers (Windows agent only)
+      responses:
+        '200':
+          description: Installed printers
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  ok:
+                    type: boolean
+                  printers:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/WindowsPrinter'
+        '501':
+          description: Not supported on this platform
   /v1/print:
     post:
       summary: Print ESC/POS job
@@ -61,6 +82,17 @@ paths:
           description: Print succeeded
 components:
   schemas:
+    WindowsPrinter:
+      type: object
+      properties:
+        name:
+          type: string
+        portName:
+          type: string
+        driverName:
+          type: string
+        isDefault:
+          type: boolean
     LegacyDantsuPrint:
       type: object
       required: [printer, payload]
@@ -68,6 +100,12 @@ components:
         printer:
           type: object
           properties:
+            type:
+              type: string
+              enum: [network, windows]
+            name:
+              type: string
+              description: Windows printer name (when type is windows)
             ip:
               type: string
             port:
@@ -83,7 +121,9 @@ components:
           properties:
             type:
               type: string
-              example: network
+              enum: [network, windows]
+            name:
+              type: string
             host:
               type: string
             port:
