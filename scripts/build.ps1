@@ -7,9 +7,9 @@ $Root = Split-Path -Parent $PSScriptRoot
 $Dist = Join-Path $Root "dist"
 New-Item -ItemType Directory -Force -Path $Dist | Out-Null
 
-Write-Host "Building SiyahoPrinterAgent.exe..."
+Write-Host "Building SiyahoPrinterAgent.exe (background, no console)..."
 Push-Location $Root
-go build -o "$Dist\SiyahoPrinterAgent.exe" ./agent
+go build -ldflags="-H=windowsgui -s -w" -o "$Dist\SiyahoPrinterAgent.exe" ./agent
 Pop-Location
 
 $Inno = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"

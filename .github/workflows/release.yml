@@ -41,7 +41,7 @@ jobs:
         shell: pwsh
         run: |
           New-Item -ItemType Directory -Force -Path dist | Out-Null
-          go build -o dist/SiyahoPrinterAgent.exe ./agent
+          go build -ldflags="-H=windowsgui -s -w" -o dist/SiyahoPrinterAgent.exe ./agent
 
       - name: Install Inno Setup
         run: choco install innosetup -y

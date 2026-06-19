@@ -4,9 +4,11 @@ Connect your web POS to network thermal printers (TCP port 9100) via a local age
 
 ## Quick start
 
-1. Install **Siyaho Printer Agent** on the Windows PC connected to the LAN printer.
+1. Install **Siyaho Printer Agent** on the Windows PC connected to the LAN printer (one-time; runs in the background, no CMD window).
 2. Confirm health: `GET http://127.0.0.1:17890/v1/health`
 3. From your web app (same machine), send print jobs to `POST /v1/print` or legacy `POST /print`.
+
+Logs: `%ProgramData%\Siyaho\PrinterAgent\agent.log`
 
 ## JavaScript SDK
 

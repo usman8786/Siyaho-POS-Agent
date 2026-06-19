@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strconv"
 	"strings"
@@ -179,7 +180,7 @@ func ListenAddress(port int) string {
 }
 
 func LogStartup(port int) {
-	fmt.Printf("Siyaho Printer Agent listening on http://%s\n", ListenAddress(port))
-	fmt.Printf("Version %s\n", meta.Version)
-	fmt.Printf("Started at %s\n", time.Now().Format(time.RFC3339))
+	log.Printf("Siyaho Printer Agent listening on http://%s", ListenAddress(port))
+	log.Printf("Version %s", meta.Version)
+	log.Printf("Started at %s", time.Now().Format(time.RFC3339))
 }

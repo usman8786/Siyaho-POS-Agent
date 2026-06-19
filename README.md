@@ -10,6 +10,17 @@ go run ./agent
 
 Listens on `http://127.0.0.1:17890`.
 
+## Windows install (production)
+
+Run `SiyahoPrinterAgent-Setup-latest.exe`. The installer:
+
+- Installs to `Program Files\Siyaho\PrinterAgent`
+- Registers a **scheduled task** (`SiyahoPrinterAgent`) to start on user logon
+- Starts the agent **in the background** (no CMD window)
+- Writes logs to `%ProgramData%\Siyaho\PrinterAgent\agent.log`
+
+Reboot or log off/on is not required after install — the agent starts immediately via the scheduled task.
+
 ## Endpoints
 
 - `GET /v1/health` — agent status

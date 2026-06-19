@@ -1,20 +1,28 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/usman8786/Siyaho-POS-Agent/agent/config"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/cors"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/handlers"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/license"
+	"github.com/usman8786/Siyaho-POS-Agent/agent/logging"
 )
 
 func main() {
+	if err := logging.Setup(); err != nil {
+		log.Fatalf("logging: %v", err)
+	}
+
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatalf("config: %v", err)
@@ -54,8 +62,21 @@ func main() {
 	}()
 
 	if err := httpServer.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		if isAddrInUse(err) {
+			log.Printf("agent already running on %s", addr)
+			return
+		}
 		log.Fatalf("server: %v", err)
 	}
+}
+
+func isAddrInUse(err error) bool {
+	var opErr *net.OpError
+	if !errors.As(err, &opErr) || opErr.Op != "listen" {
+		return false
+	}
+	msg := strings.ToLower(opErr.Err.Error())
+	return strings.Contains(msg, "address already in use") || strings.Contains(msg, "only one usage")
 }
 
 func parsePort(raw string) (int, error) {
