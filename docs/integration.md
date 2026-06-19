@@ -13,12 +13,12 @@ Logs: `%ProgramData%\Siyaho\PrinterAgent\agent.log`
 ## JavaScript SDK
 
 ```bash
-npm install @siyaho/printer-agent
+npm install siyaho-printer-agent
 # or file:../Siyaho-POS-Agent/sdk/js during development
 ```
 
 ```js
-import { PrintBridge } from '@siyaho/printer-agent';
+import { PrintBridge } from 'siyaho-printer-agent';
 
 const bridge = new PrintBridge({
   baseUrl: 'http://127.0.0.1:17890',

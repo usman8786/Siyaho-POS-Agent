@@ -25,7 +25,7 @@
   },
   "author": "Muhammad Usman",
   "homepage": "https://github.com/usman8786/Siyaho-POS-Agent",
-  "description": "JavaScript client for Siyaho Printer Agent (local ESC/POS bridge)",
+  "description": "JavaScript client for Siyaho Printer Agent — local ESC/POS bridge for web POS apps. Install the Windows agent from pos.siyaho.com, then use this SDK in your browser app.",
   "license": "MIT",
   "type": "module",
   "main": "./index.js",
@@ -34,6 +34,7 @@
   },
   "files": [
     "index.js",
-    "errors.js"
+    "errors.js",
+    "README.md"
   ]
 }
