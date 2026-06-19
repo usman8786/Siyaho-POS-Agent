@@ -1,5 +1,5 @@
 {
-  "version": "1.0.1",
-  "windows": "https://pos.siyaho.com/downloads/print-agent/SiyahoPrinterAgent-Setup-1.0.1.exe",
-  "minVersion": "1.0.1"
+  "version": "1.0.2",
+  "windows": "https://pos.siyaho.com/downloads/print-agent/SiyahoPrinterAgent-Setup-1.0.2.exe",
+  "minVersion": "1.0.2"
 }
