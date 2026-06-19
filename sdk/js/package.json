@@ -1,6 +1,30 @@
 {
-  "name": "@siyaho/printer-agent",
+  "name": "siyaho-printer-agent",
   "version": "1.0.0",
+  "keywords": [
+    "siyaho",
+    "printer",
+    "pos printer",
+    "pos printer agent",
+    "pos printer bridge",
+    "pos printer bridge agent",
+    "pos printer bridge agent",
+    "pos printer driver",
+    "pos printer driver agent",
+    "pos printer driver bridge",
+    "pos printer driver bridge agent",
+    "pos printer driver bridge agent",
+    "agent",
+    "local",
+    "esc/pos",
+    "bridge"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/usman8786/Siyaho-POS-Agent"
+  },
+  "author": "Muhammad Usman",
+  "homepage": "https://github.com/usman8786/Siyaho-POS-Agent",
   "description": "JavaScript client for Siyaho Printer Agent (local ESC/POS bridge)",
   "license": "MIT",
   "type": "module",
