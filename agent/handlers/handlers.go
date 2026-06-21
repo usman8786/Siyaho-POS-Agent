@@ -11,15 +11,13 @@ import (
 	"time"
 
 	"github.com/usman8786/Siyaho-POS-Agent/agent/config"
-	"github.com/usman8786/Siyaho-POS-Agent/agent/license"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/meta"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/print"
 )
 
 type Server struct {
-	Port     int
-	Config   config.Config
-	Licenses *license.Manager
+	Port   int
+	Config config.Config
 }
 
 type legacyPrintBody struct {
@@ -70,18 +68,12 @@ func (s *Server) handleHealth(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusMethodNotAllowed, map[string]any{"ok": false, "error": "Method not allowed"})
 		return
 	}
-	lic := s.Licenses.Snapshot()
 	writeJSON(w, http.StatusOK, map[string]any{
 		"ok":       true,
 		"service":  meta.ServiceName,
 		"version":  meta.Version,
 		"port":     s.Port,
 		"platform": runtime.GOOS,
-		"license": map[string]any{
-			"valid":       lic.Valid,
-			"companyName": lic.CompanyName,
-			"expiresAt":   lic.ExpiresAt,
-		},
 	})
 }
 

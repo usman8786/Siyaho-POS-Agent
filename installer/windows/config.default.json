@@ -1,5 +1,3 @@
 {
-  "port": 17890,
-  "licenseKey": "",
-  "apiBaseUrl": "https://siyaho.com"
+  "port": 17890
 }

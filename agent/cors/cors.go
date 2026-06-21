@@ -3,29 +3,18 @@ package cors
 import (
 	"net/http"
 	"strings"
-
-	"github.com/usman8786/Siyaho-POS-Agent/agent/license"
 )
 
-type Middleware struct {
-	licenses *license.Manager
-}
+type Middleware struct{}
 
-func New(licenses *license.Manager) *Middleware {
-	return &Middleware{licenses: licenses}
+func New() *Middleware {
+	return &Middleware{}
 }
 
 func (m *Middleware) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		origin := r.Header.Get("Origin")
-		if origin != "" && !m.licenses.IsOriginAllowed(origin) {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusForbidden)
-			_, _ = w.Write([]byte(`{"ok":false,"error":"Origin not allowed"}`))
-			return
-		}
-
-		if origin != "" && m.licenses.IsOriginAllowed(origin) {
+		origin := strings.TrimSpace(r.Header.Get("Origin"))
+		if origin != "" {
 			w.Header().Set("Access-Control-Allow-Origin", origin)
 			w.Header().Set("Vary", "Origin")
 		}

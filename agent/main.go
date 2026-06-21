@@ -14,7 +14,6 @@ import (
 	"github.com/usman8786/Siyaho-POS-Agent/agent/config"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/cors"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/handlers"
-	"github.com/usman8786/Siyaho-POS-Agent/agent/license"
 	"github.com/usman8786/Siyaho-POS-Agent/agent/logging"
 )
 
@@ -34,17 +33,12 @@ func main() {
 		}
 	}
 
-	licenses := license.NewManager(cfg)
-	stop := make(chan struct{})
-	license.StartAutoRefresh(licenses, stop)
-
 	srv := &handlers.Server{
-		Port:     cfg.Port,
-		Config:   cfg,
-		Licenses: licenses,
+		Port:   cfg.Port,
+		Config: cfg,
 	}
 
-	mux := cors.New(licenses).Wrap(srv.Handler())
+	mux := cors.New().Wrap(srv.Handler())
 	addr := handlers.ListenAddress(cfg.Port)
 	handlers.LogStartup(cfg.Port)
 
@@ -57,7 +51,6 @@ func main() {
 		sigCh := make(chan os.Signal, 1)
 		signal.Notify(sigCh, syscall.SIGINT, syscall.SIGTERM)
 		<-sigCh
-		close(stop)
 		_ = httpServer.Close()
 	}()
 

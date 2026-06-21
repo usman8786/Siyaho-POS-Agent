@@ -8,19 +8,14 @@ import (
 )
 
 const DefaultPort = 17890
-const DefaultAPIBase = "https://siyaho.com"
 
 type Config struct {
-	Port       int    `json:"port"`
-	LicenseKey string `json:"licenseKey"`
-	APIBaseURL string `json:"apiBaseUrl"`
+	Port int `json:"port"`
 }
 
 func Default() Config {
 	return Config{
-		Port:       DefaultPort,
-		LicenseKey: "",
-		APIBaseURL: DefaultAPIBase,
+		Port: DefaultPort,
 	}
 }
 
@@ -55,9 +50,6 @@ func Load() (Config, error) {
 	}
 	if cfg.Port <= 0 {
 		cfg.Port = DefaultPort
-	}
-	if cfg.APIBaseURL == "" {
-		cfg.APIBaseURL = DefaultAPIBase
 	}
 	return cfg, nil
 }

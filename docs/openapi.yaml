@@ -1,8 +1,8 @@
 openapi: 3.0.3
 info:
   title: Siyaho Printer Agent API
-  version: 1.1.0
-  description: Local bridge between web POS apps and network or Windows USB thermal printers.
+  version: 1.2.0
+  description: Local bridge between web POS apps and network or Windows USB thermal printers. Open source — no license required.
 servers:
   - url: http://127.0.0.1:17890
 paths:
@@ -27,8 +27,6 @@ paths:
                     type: integer
                   platform:
                     type: string
-                  license:
-                    type: object
   /v1/printers:
     get:
       summary: List Windows printers (Windows agent only)
@@ -64,8 +62,6 @@ paths:
           description: Print succeeded
         '400':
           description: Invalid request
-        '403':
-          description: Origin not allowed
         '500':
           description: Print failed
   /print:

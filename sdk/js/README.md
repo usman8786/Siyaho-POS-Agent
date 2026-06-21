@@ -42,7 +42,7 @@ const bridge = new PrintBridge({
 // Check agent on this PC
 if (await bridge.ping()) {
   const health = await bridge.getHealth();
-  console.log(health.version); // e.g. "1.1.0"
+  console.log(health.version); // e.g. "1.2.0"
 }
 
 // List Windows printers (USB, etc.)
@@ -112,7 +112,7 @@ try {
 | Method | Description |
 |--------|-------------|
 | `ping()` | `true` if agent responds on `/v1/health` or legacy `/health` |
-| `getHealth()` | Full health JSON (`version`, `service`, `license`, …) |
+| `getHealth()` | Full health JSON (`version`, `service`, `platform`, …) |
 | `listPrinters()` | `GET /v1/printers` — Windows installed printers |
 | `print(job)` | `POST /v1/print` |
 | `printDantsu(printer, payload)` | `POST /print` — network `{ ip, port }` or Windows `{ type: 'windows', name }` |
@@ -141,38 +141,16 @@ The Go agent listens on **`127.0.0.1:17890`** only (not exposed to the network).
 | Endpoint | Method | Description |
 |----------|--------|-------------|
 | `/v1/printers` | GET | List Windows installed printers |
-| `/v1/health` | GET | Status, version, license info |
+| `/v1/health` | GET | Status and version |
 | `/v1/print` | POST | v1 print job |
 | `/print` | POST | Legacy `{ printer: { ip, port }, payload }` |
 | `/health` | GET | Legacy health (compat) |
 
 OpenAPI and full docs: [github.com/usman8786/Siyaho-POS-Agent](https://github.com/usman8786/Siyaho-POS-Agent/tree/main/docs)
 
-## Third-party POS vendors
-
-Building your own web POS (not Siyaho)? Request a license key so the agent accepts your origin:
-
-https://pos.siyaho.com/print-agent-request
-
-After approval, add to `%ProgramData%\Siyaho\PrinterAgent\config.json`:
-
-```json
-{
-  "port": 17890,
-  "licenseKey": "spa_live_...",
-  "apiBaseUrl": "https://siyaho.com"
-}
-```
-
 ## CORS
 
-The agent allows:
-
-- `*.siyaho.com` origins (first-party)
-- `http://localhost:5173` and `http://localhost:5000` (development)
-- Approved third-party origins after license validation
-
-Your web app must be opened from a browser **on the same PC** as the agent (or use the allowed origin rules above).
+The agent reflects your browser `Origin` header — **any web POS domain** works without registration. The service listens on **127.0.0.1 only** on the same PC as your browser.
 
 ## Security
 
