@@ -1,6 +1,6 @@
 #define MyAppName "Siyaho Printer Agent"
 #ifndef MyAppVersion
-#define MyAppVersion "1.2.0"
+#define MyAppVersion "1.2.1"
 #endif
 #define MyAppPublisher "Siyaho"
 #define MyAppExeName "SiyahoPrinterAgent.exe"
@@ -20,6 +20,8 @@ Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
 PrivilegesRequired=admin
+; Stop/kill the agent in [Code] PrepareToInstall before files are replaced.
+CloseApplications=no
 
 [Languages]
 Name: "english"; MessagesFile: "compiler:Default.isl"
@@ -33,9 +35,34 @@ Name: "{group}\{#MyAppName}"; Filename: "{app}\{#MyAppExeName}"
 Name: "{group}\Uninstall {#MyAppName}"; Filename: "{uninstallexe}"
 
 [Run]
-Filename: "{cmd}"; Parameters: "/c schtasks /End /TN ""{#MyAppTaskName}"" >nul 2>&1 & taskkill /IM {#MyAppExeName} /F >nul 2>&1"; Flags: runhidden waituntilterminated; StatusMsg: "Stopping existing agent..."
 Filename: "schtasks"; Parameters: "/Create /TN ""{#MyAppTaskName}"" /TR ""\""{app}\{#MyAppExeName}\"""" /SC ONLOGON /RL LIMITED /F"; Flags: runhidden waituntilterminated; StatusMsg: "Registering auto-start..."
 Filename: "schtasks"; Parameters: "/Run /TN ""{#MyAppTaskName}"""; Flags: runhidden waituntilterminated; Description: "Start {#MyAppName} in the background"; StatusMsg: "Starting {#MyAppName}..."
+
+[Code]
+procedure StopRunningAgent;
+var
+  ResultCode: Integer;
+  I: Integer;
+begin
+  for I := 1 to 4 do
+  begin
+    Exec('schtasks.exe', '/End /TN "{#MyAppTaskName}"', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Exec('taskkill.exe', '/IM {#MyAppExeName} /F', '', SW_HIDE, ewWaitUntilTerminated, ResultCode);
+    Sleep(750);
+  end;
+end;
+
+function PrepareToInstall(var NeedsRestart: Boolean): String;
+begin
+  StopRunningAgent;
+  Result := '';
+end;
+
+function InitializeUninstall(): Boolean;
+begin
+  StopRunningAgent;
+  Result := True;
+end;
 
 [UninstallRun]
 Filename: "schtasks"; Parameters: "/End /TN ""{#MyAppTaskName}"""; Flags: runhidden

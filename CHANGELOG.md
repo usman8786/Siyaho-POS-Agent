@@ -4,6 +4,12 @@ All notable changes to this project are documented here.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.2.1] - 2026-06-21
+
+### Fixed
+
+- Windows installer stops the running agent (scheduled task + process) **before** replacing `SiyahoPrinterAgent.exe`, so in-place upgrades work without manual taskkill
+
 ## [1.2.0] - 2026-06-16
 
 ### Removed
@@ -27,4 +33,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 - Initial release: network TCP printing, Windows installer, scheduled task, background agent
 
+[1.2.1]: https://github.com/usman8786/Siyaho-POS-Agent/compare/v1.2.0...v1.2.1
 [1.2.0]: https://github.com/usman8786/Siyaho-POS-Agent/compare/v1.1.0...v1.2.0
