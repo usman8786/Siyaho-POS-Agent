@@ -1,5 +1,7 @@
 #define MyAppName "Siyaho Printer Agent"
-#define MyAppVersion "1.1.0"
+#ifndef MyAppVersion
+#define MyAppVersion "1.2.0"
+#endif
 #define MyAppPublisher "Siyaho"
 #define MyAppExeName "SiyahoPrinterAgent.exe"
 #define MyAppTaskName "SiyahoPrinterAgent"

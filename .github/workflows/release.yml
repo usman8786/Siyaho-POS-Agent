@@ -50,8 +50,23 @@ jobs:
       - name: Build installer
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $version = "${{ steps.ver.outputs.version }}"
-          & "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" "/DMyAppVersion=$version" installer/windows/setup.iss
+          $inno = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $inno)) {
+            $inno = "${env:ProgramFiles}\Inno Setup 6\ISCC.exe"
+          }
+          if (-not (Test-Path $inno)) {
+            throw "Inno Setup ISCC.exe not found"
+          }
+          & $inno "/DMyAppVersion=$version" "installer/windows/setup.iss"
+          if ($LASTEXITCODE -ne 0) { throw "Inno Setup failed with exit code $LASTEXITCODE" }
+          $installer = "dist/SiyahoPrinterAgent-Setup-$version.exe"
+          Write-Host "dist contents:"
+          Get-ChildItem dist | Format-Table Name, Length
+          if (-not (Test-Path $installer)) {
+            throw "Installer not found: $installer"
+          }
 
       - name: Optional code sign
         shell: pwsh
@@ -72,14 +87,19 @@ jobs:
       - name: Write releases.json
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $version = "${{ steps.ver.outputs.version }}"
+          $installer = "dist/SiyahoPrinterAgent-Setup-$version.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Installer missing before releases.json: $installer"
+          }
           $json = @{
             version = $version
             windows = "https://pos.siyaho.com/downloads/print-agent/SiyahoPrinterAgent-Setup-$version.exe"
             minVersion = $version
           } | ConvertTo-Json
           Set-Content -Path releases.json -Value $json -Encoding UTF8
-          Copy-Item "dist/SiyahoPrinterAgent-Setup-$version.exe" "dist/SiyahoPrinterAgent-Setup-latest.exe" -ErrorAction SilentlyContinue
+          Copy-Item $installer "dist/SiyahoPrinterAgent-Setup-latest.exe"
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
@@ -95,9 +115,14 @@ jobs:
       - name: Stage CDN artifacts
         shell: pwsh
         run: |
+          $ErrorActionPreference = "Stop"
           $version = "${{ steps.ver.outputs.version }}"
+          $installer = "dist/SiyahoPrinterAgent-Setup-$version.exe"
+          if (-not (Test-Path $installer)) {
+            throw "Installer missing for CDN staging: $installer"
+          }
           New-Item -ItemType Directory -Force -Path cdn | Out-Null
-          Copy-Item "dist/SiyahoPrinterAgent-Setup-$version.exe" "cdn/SiyahoPrinterAgent-Setup-$version.exe"
+          Copy-Item $installer "cdn/SiyahoPrinterAgent-Setup-$version.exe"
           Copy-Item releases.json cdn/releases.json
 
       - name: Upload CDN artifacts
